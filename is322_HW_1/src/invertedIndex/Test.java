@@ -18,8 +18,16 @@ public class Test {
     public static void main(String args[]) throws IOException {
         Index5 index = new Index5();
         //|**  change it to your collection directory 
-        //|**  in windows "C:\\tmp11\\rl\\collection\\"       
-        String files = "/home/ehab/tmp11/rl/collection/";
+        //|**  in windows "C:\\tmp11\\rl\\collection\\"
+
+        // Get the current working directory
+        String currentDirectory = System.getProperty("user.dir");
+
+        // Navigate up to the root directory of the project
+        File rootDirectory = new File(currentDirectory).getParentFile().getParentFile().getParentFile();
+
+        // Change directory to the collection directory
+        String files = rootDirectory.toPath().resolve("tmp11/rl/collection/").toString();
 
         File file = new File(files);
         //|** String[] 	list()
