@@ -1,29 +1,19 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package invertedIndex;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.Writer;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import static java.lang.Math.log10;
-import static java.lang.Math.sqrt;
+import java.io.Writer;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.io.PrintWriter;
 
 /**
- *
  * @author ehab
  */
 public class Index5 {
-
     //--------------------------------------------
     int N = 0;
     public Map<Integer, SourceRecord> sources;  // store the doc_id and the file name.
@@ -39,7 +29,6 @@ public class Index5 {
     public void setN(int n) {
         N = n;
     }
-
 
     //---------------------------------------------
     public void printPostingList(Posting p) {
@@ -190,6 +179,12 @@ public class Index5 {
         Posting posting = index.get(words[0].toLowerCase()).pList;
         int i = 1;
         while (i < len) {
+            // If the word is NOT in the hash table, skip it
+            if(!index.containsKey(words[i].toLowerCase())){
+                i++;
+                continue;
+            }
+            // Otherwise intersect the posting list with the current word
             posting = intersect(posting, index.get(words[i].toLowerCase()).pList);
             i++;
         }
@@ -200,8 +195,7 @@ public class Index5 {
         }
         return result;
     }
-    
-    
+
     //---------------------------------
     String[] sort(String[] words) {  //bubble sort
         boolean sorted = false;
@@ -226,6 +220,7 @@ public class Index5 {
 
     public void store(String storageName) {
         try {
+            // TODO: Change the path to the storage file to the correct path
             String pathToStorage = "/home/ehab/tmp11/rl/"+storageName;
             Writer wr = new FileWriter(pathToStorage);
             for (Map.Entry<Integer, SourceRecord> entry : sources.entrySet()) {
