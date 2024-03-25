@@ -14,36 +14,45 @@ import java.util.Map;
  * @author ehab
  */
 public class Index5 {
-    //--------------------------------------------
+    // --------------------------------------------
     int N = 0;
-    public Map<Integer, SourceRecord> sources;  // store the doc_id and the file name.
+    public Map<Integer, SourceRecord> sources; // store the doc_id and the file name.
 
     public HashMap<String, DictEntry> index; // THe inverted index
-    //--------------------------------------------
+    // --------------------------------------------
+
+    // Get the current working directory
+    String currentDirectory;
+
+    // Navigate up to the root directory of the project
+    File rootDirectory;
 
     public Index5() {
         sources = new HashMap<Integer, SourceRecord>();
         index = new HashMap<String, DictEntry>();
+        currentDirectory = System.getProperty("user.dir");
+        rootDirectory = new File(currentDirectory).getParentFile().getParentFile().getParentFile();
     }
 
     public void setN(int n) {
         N = n;
     }
 
-    //---------------------------------------------
+    // ---------------------------------------------
     public void printPostingList(Posting p) {
         // Iterator<Integer> it2 = hset.iterator();
         System.out.print("[");
         while (p != null) {
-            /// -4- **** complete here ****
-            // fix get rid of the last comma
-            System.out.print("" + p.docId + "," );
+            System.out.print("" + p.docId);
             p = p.next;
+            if (p != null) {
+                System.out.print(", ");
+            }
         }
         System.out.println("]");
     }
 
-    //---------------------------------------------
+    // ---------------------------------------------
     public void printDictionary() {
         Iterator it = index.entrySet().iterator();
         while (it.hasNext()) {
@@ -55,9 +64,9 @@ public class Index5 {
         System.out.println("------------------------------------------------------");
         System.out.println("*** Number of terms = " + index.size());
     }
- 
-    //-----------------------------------------------
-    public void buildIndex(String[] files) {  // from disk not from the internet
+
+    // -----------------------------------------------
+    public void buildIndex(String[] files) { // from disk not from the internet
         int fid = 0;
         for (String fileName : files) {
             try (BufferedReader file = new BufferedReader(new FileReader(fileName))) {
@@ -67,8 +76,7 @@ public class Index5 {
                 String ln;
                 int flen = 0;
                 while ((ln = file.readLine()) != null) {
-                    /// -2- **** complete here ****
-                    ///**** hint   flen +=  ________________(ln, fid);
+                    flen += indexOneLine(ln, fid);
                 }
                 sources.get(fid).length = flen;
 
@@ -77,15 +85,16 @@ public class Index5 {
             }
             fid++;
         }
-        //   printDictionary();
+        // printDictionary();
     }
 
-    //----------------------------------------------------------------------------  
+    // ----------------------------------------------------------------------------
     public int indexOneLine(String ln, int fid) {
         int flen = 0;
 
         String[] words = ln.split("\\W+");
-      //   String[] words = ln.replaceAll("(?:[^a-zA-Z0-9 -]|(?<=\\w)-(?!\\S))", " ").toLowerCase().split("\\s+");
+        // String[] words = ln.replaceAll("(?:[^a-zA-Z0-9 -]|(?<=\\w)-(?!\\S))", "
+        // ").toLowerCase().split("\\s+");
         flen += words.length;
         for (String word : words) {
             word = word.toLowerCase();
@@ -100,7 +109,7 @@ public class Index5 {
             }
             // add document id to the posting list
             if (!index.get(word).postingListContains(fid)) {
-                index.get(word).doc_freq += 1; //set doc freq to the number of doc that contain the term 
+                index.get(word).doc_freq += 1; // set doc freq to the number of doc that contain the term
                 if (index.get(word).pList == null) {
                     index.get(word).pList = new Posting(fid);
                     index.get(word).last = index.get(word).pList;
@@ -111,7 +120,7 @@ public class Index5 {
             } else {
                 index.get(word).last.dtf += 1;
             }
-            //set the term_fteq in the collection
+            // set the term_fteq in the collection
             index.get(word).term_freq += 1;
             if (word.equalsIgnoreCase("lattice")) {
 
@@ -122,10 +131,12 @@ public class Index5 {
         return flen;
     }
 
-//----------------------------------------------------------------------------  
+    // ----------------------------------------------------------------------------
     boolean stopWord(String word) {
-        if (word.equals("the") || word.equals("to") || word.equals("be") || word.equals("for") || word.equals("from") || word.equals("in")
-                || word.equals("a") || word.equals("into") || word.equals("by") || word.equals("or") || word.equals("and") || word.equals("that")) {
+        if (word.equals("the") || word.equals("to") || word.equals("be") || word.equals("for") || word.equals("from")
+                || word.equals("in")
+                || word.equals("a") || word.equals("into") || word.equals("by") || word.equals("or")
+                || word.equals("and") || word.equals("that")) {
             return true;
         }
         if (word.length() < 2) {
@@ -134,73 +145,98 @@ public class Index5 {
         return false;
 
     }
-//----------------------------------------------------------------------------  
+    // ----------------------------------------------------------------------------
 
-    String stemWord(String word) { //skip for now
+    String stemWord(String word) { // skip for now
         return word;
-//        Stemmer s = new Stemmer();
-//        s.addString(word);
-//        s.stem();
-//        return s.toString();
+        // Stemmer s = new Stemmer();
+        // s.addString(word);
+        // s.stem();
+        // return s.toString();
     }
 
-    //----------------------------------------------------------------------------  
+    // ----------------------------------------------------------------------------
     Posting intersect(Posting pL1, Posting pL2) {
-///****  -1-   complete after each comment ****
-//   INTERSECT ( p1 , p2 )
-//          1  answer ←      {}
+        /// **** -1- complete after each comment ****
+        // INTERSECT ( p1 , p2 )
+        // 1 answer ← {}
+        // Posting answer = null;
+        // Posting last = null;
+        // 2 while p1 != NIL and p2 != NIL
+
+        // 3 do if docID ( p 1 ) = docID ( p2 )
+
+        // 4 then ADD ( answer, docID ( p1 ))
+        // answer.add(pL1.docId);
+
+        // 5 p1 ← next ( p1 )
+        // 6 p2 ← next ( p2 )
+
+        // 7 else if docID ( p1 ) < docID ( p2 )
+
+        // 8 then p1 ← next ( p1 )
+        // 9 else p2 ← next ( p2 )
+
+        // 10 return answer
+
         Posting answer = null;
         Posting last = null;
-//      2 while p1  != NIL and p2  != NIL
-     
-//          3 do if docID ( p 1 ) = docID ( p2 )
- 
-//          4   then ADD ( answer, docID ( p1 ))
-                // answer.add(pL1.docId);
- 
-//          5       p1 ← next ( p1 )
-//          6       p2 ← next ( p2 )
- 
- //          7   else if docID ( p1 ) < docID ( p2 )
-            
-//          8        then p1 ← next ( p1 )
-//          9        else p2 ← next ( p2 )
- 
-//      10 return answer
+        while (pL1 != null && pL2 != null) {
+            if (pL1.docId == pL2.docId) {
+                if (answer == null) {
+                    answer = new Posting(pL1.docId, pL1.dtf);
+                    last = answer;
+                } else {
+                    last.next = new Posting(pL1.docId, pL1.dtf);
+                    last = last.next;
+                }
+                pL1 = pL1.next;
+                pL2 = pL2.next;
+            } else if (pL1.docId < pL2.docId) {
+                pL1 = pL1.next;
+            } else {
+                pL2 = pL2.next;
+            }
+        }
         return answer;
     }
 
-    public String find_24_01(String phrase) { // any mumber of terms non-optimized search 
+    public String find_24_01(String phrase) { // any mumber of terms non-optimized search
         String result = "";
         String[] words = phrase.split("\\W+");
         int len = words.length;
-        
-        //fix this if word is not in the hash table will crash...
-        Posting posting = index.get(words[0].toLowerCase()).pList;
-        int i = 1;
+
+        // fix this if word is not in the hash table will crash...
+        Posting posting = null;
+        int i = 0;
         while (i < len) {
-            // If the word is NOT in the hash table, skip it
-            if(!index.containsKey(words[i].toLowerCase())){
+            if (stopWord(words[i].toLowerCase())) {
                 i++;
                 continue;
             }
+            if (!index.containsKey(words[i].toLowerCase())) {
+                return "Word not found in the index";
+            }
+            if (posting == null)
+                posting = index.get(words[i].toLowerCase()).pList;
             // Otherwise intersect the posting list with the current word
             posting = intersect(posting, index.get(words[i].toLowerCase()).pList);
             i++;
         }
         while (posting != null) {
-            //System.out.println("\t" + sources.get(num));
-            result += "\t" + posting.docId + " - " + sources.get(posting.docId).title + " - " + sources.get(posting.docId).length + "\n";
+            // System.out.println("\t" + sources.get(num));
+            result += "\t" + posting.docId + " - " + sources.get(posting.docId).title + " - "
+                    + sources.get(posting.docId).length + "\n";
             posting = posting.next;
         }
         return result;
     }
 
-    //---------------------------------
-    String[] sort(String[] words) {  //bubble sort
+    // ---------------------------------
+    String[] sort(String[] words) { // bubble sort
         boolean sorted = false;
         String sTmp;
-        //-------------------------------------------------------
+        // -------------------------------------------------------
         while (!sorted) {
             sorted = true;
             for (int i = 0; i < words.length - 1; i++) {
@@ -216,19 +252,22 @@ public class Index5 {
         return words;
     }
 
-     //---------------------------------
+    // ---------------------------------
 
     public void store(String storageName) {
         try {
             // TODO: Change the path to the storage file to the correct path
-            String pathToStorage = "/home/ehab/tmp11/rl/"+storageName;
+            String pathToStorage = rootDirectory.toPath().resolve("tmp11/rl/" + storageName).toString();
+
+            // String pathToStorage = "/home/ehab/tmp11/rl/" + storageName;
             Writer wr = new FileWriter(pathToStorage);
             for (Map.Entry<Integer, SourceRecord> entry : sources.entrySet()) {
-                System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue().URL + ", Value = " + entry.getValue().title + ", Value = " + entry.getValue().text);
+                System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue().URL + ", Value = "
+                        + entry.getValue().title + ", Value = " + entry.getValue().text);
                 wr.write(entry.getKey().toString() + ",");
                 wr.write(entry.getValue().URL.toString() + ",");
                 wr.write(entry.getValue().title.replace(',', '~') + ",");
-                wr.write(entry.getValue().length + ","); //String formattedDouble = String.format("%.2f", fee );
+                wr.write(entry.getValue().length + ","); // String formattedDouble = String.format("%.2f", fee );
                 wr.write(String.format("%4.4f", entry.getValue().norm) + ",");
                 wr.write(entry.getValue().text.toString().replace(',', '~') + "\n");
             }
@@ -238,11 +277,12 @@ public class Index5 {
             while (it.hasNext()) {
                 Map.Entry pair = (Map.Entry) it.next();
                 DictEntry dd = (DictEntry) pair.getValue();
-                //  System.out.print("** [" + pair.getKey() + "," + dd.doc_freq + "] <" + dd.term_freq + "> =--> ");
+                // System.out.print("** [" + pair.getKey() + "," + dd.doc_freq + "] <" +
+                // dd.term_freq + "> =--> ");
                 wr.write(pair.getKey().toString() + "," + dd.doc_freq + "," + dd.term_freq + ";");
                 Posting p = dd.pList;
                 while (p != null) {
-                    //    System.out.print( p.docId + "," + p.dtf + ":");
+                    // System.out.print( p.docId + "," + p.dtf + ":");
                     wr.write(p.docId + "," + p.dtf + ":");
                     p = p.next;
                 }
@@ -256,31 +296,39 @@ public class Index5 {
             e.printStackTrace();
         }
     }
-//=========================================    
-    public boolean storageFileExists(String storageName){
-        java.io.File f = new java.io.File("/home/ehab/tmp11/rl/"+storageName);
+
+    // =========================================
+    public boolean storageFileExists(String storageName) {
+        java.io.File f = rootDirectory.toPath().resolve("tmp11/rl/" + storageName).toFile();
+        System.out.println("storageFileExists: " + f.toString());
+
+        // java.io.File f = new java.io.File("/home/ehab/tmp11/rl/" + storageName);
         if (f.exists() && !f.isDirectory())
             return true;
         return false;
-            
+
     }
-//----------------------------------------------------    
+
+    // ----------------------------------------------------
     public void createStore(String storageName) {
         try {
-            String pathToStorage = "/home/ehab/tmp11/"+storageName;
+            String pathToStorage = rootDirectory.toPath().resolve("tmp11/" + storageName).toString();
+            // String pathToStorage = "/home/ehab/tmp11/" + storageName;
             Writer wr = new FileWriter(pathToStorage);
             wr.write("end" + "\n");
             wr.close();
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-//----------------------------------------------------      
-     //load index from hard disk into memory
+
+    // ----------------------------------------------------
+    // load index from hard disk into memory
     public HashMap<String, DictEntry> load(String storageName) {
         try {
-            String pathToStorage = "/home/ehab/tmp11/rl/"+storageName;         
+            String pathToStorage = rootDirectory.toPath().resolve("tmp11/rl/" + storageName).toString();
+            // String pathToStorage = "/home/ehab/tmp11/rl/" + storageName;
             sources = new HashMap<Integer, SourceRecord>();
             index = new HashMap<String, DictEntry>();
             BufferedReader file = new BufferedReader(new FileReader(pathToStorage));
@@ -293,10 +341,13 @@ public class Index5 {
                 String[] ss = ln.split(",");
                 int fid = Integer.parseInt(ss[0]);
                 try {
-                    System.out.println("**>>" + fid + " " + ss[1] + " " + ss[2].replace('~', ',') + " " + ss[3] + " [" + ss[4] + "]   " + ss[5].replace('~', ','));
+                    System.out.println("**>>" + fid + " " + ss[1] + " " + ss[2].replace('~', ',') + " " + ss[3] + " ["
+                            + ss[4] + "]   " + ss[5].replace('~', ','));
 
-                    SourceRecord sr = new SourceRecord(fid, ss[1], ss[2].replace('~', ','), Integer.parseInt(ss[3]), Double.parseDouble(ss[4]), ss[5].replace('~', ','));
-                    //   System.out.println("**>>"+fid+" "+ ss[1]+" "+ ss[2]+" "+ ss[3]+" ["+ Double.parseDouble(ss[4])+ "]  \n"+ ss[5]);
+                    SourceRecord sr = new SourceRecord(fid, ss[1], ss[2].replace('~', ','), Integer.parseInt(ss[3]),
+                            Double.parseDouble(ss[4]), ss[5].replace('~', ','));
+                    // System.out.println("**>>"+fid+" "+ ss[1]+" "+ ss[2]+" "+ ss[3]+" ["+
+                    // Double.parseDouble(ss[4])+ "] \n"+ ss[5]);
                     sources.put(fid, sr);
                 } catch (Exception e) {
 
@@ -305,7 +356,7 @@ public class Index5 {
                 }
             }
             while ((ln = file.readLine()) != null) {
-                //     System.out.println(ln);
+                // System.out.println(ln);
                 if (ln.equalsIgnoreCase("end")) {
                     break;
                 }
@@ -313,20 +364,21 @@ public class Index5 {
                 String[] ss1a = ss1[0].split(",");
                 String[] ss1b = ss1[1].split(":");
                 index.put(ss1a[0], new DictEntry(Integer.parseInt(ss1a[1]), Integer.parseInt(ss1a[2])));
-                String[] ss1bx;   //posting
+                String[] ss1bx; // posting
                 for (int i = 0; i < ss1b.length; i++) {
                     ss1bx = ss1b[i].split(",");
                     if (index.get(ss1a[0]).pList == null) {
                         index.get(ss1a[0]).pList = new Posting(Integer.parseInt(ss1bx[0]), Integer.parseInt(ss1bx[1]));
                         index.get(ss1a[0]).last = index.get(ss1a[0]).pList;
                     } else {
-                        index.get(ss1a[0]).last.next = new Posting(Integer.parseInt(ss1bx[0]), Integer.parseInt(ss1bx[1]));
+                        index.get(ss1a[0]).last.next = new Posting(Integer.parseInt(ss1bx[0]),
+                                Integer.parseInt(ss1bx[1]));
                         index.get(ss1a[0]).last = index.get(ss1a[0]).last.next;
                     }
                 }
             }
             System.out.println("============= END LOAD =============");
-            //    printDictionary();
+            // printDictionary();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -334,4 +386,4 @@ public class Index5 {
     }
 }
 
-//=====================================================================
+// =====================================================================

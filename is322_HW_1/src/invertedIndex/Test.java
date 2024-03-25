@@ -26,18 +26,18 @@ public class Test {
         String[] fileList = new File(files).list();
 
         fileList = index.sort(fileList); // Sort the index
-        index.N = fileList.length;       // Store the number of documents in the collection
+        index.N = fileList.length; // Store the number of documents in the collection
 
         // Add the path to the file names
         for (int i = 0; i < fileList.length; i++)
-            fileList[i] = files + fileList[i];
+            fileList[i] = files + "\\" + fileList[i];
 
         // Build the index and save it to disk
         index.buildIndex(fileList);
         index.store("index");
         index.printDictionary();
 
-        String test3 = "data  should plain greatest comif"; // data  should plain greatest comif
+        String test3 = "data  should plain greatest comif"; // data should plain greatest comif
         System.out.println("Boo0lean Model result = \n" + index.find_24_01(test3));
 
         // Take input query from the user
@@ -46,8 +46,9 @@ public class Test {
             System.out.println("Print search phrase: ");
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
             phrase = in.readLine();
+            System.out.println("Phrase: " + phrase);
             // Find the search phrase in the index
-            index.find_24_01(phrase);
+            System.out.println(index.find_24_01(phrase));
         } while (!phrase.isEmpty());
     }
 }
