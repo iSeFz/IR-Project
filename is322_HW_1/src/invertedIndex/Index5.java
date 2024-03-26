@@ -43,8 +43,10 @@ public class Index5 {
         // Iterator<Integer> it2 = hset.iterator();
         System.out.print("[");
         while (p != null) {
+            // print the document id
             System.out.print("" + p.docId);
             p = p.next;
+            // add comma if not the last element
             if (p != null) {
                 System.out.print(", ");
             }
@@ -53,14 +55,18 @@ public class Index5 {
     }
 
     // ---------------------------------------------
+    // print the dictionary
     public void printDictionary() {
         Iterator it = index.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
             DictEntry dd = (DictEntry) pair.getValue();
+            // print the term and the document frequency
             System.out.print("** [" + pair.getKey() + "," + dd.doc_freq + "]       =--> ");
+            // print the posting list
             printPostingList(dd.pList);
         }
+        // print the number of terms
         System.out.println("------------------------------------------------------");
         System.out.println("*** Number of terms = " + index.size());
     }
