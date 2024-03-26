@@ -67,17 +67,25 @@ public class Index5 {
 
     // -----------------------------------------------
     public void buildIndex(String[] files) { // from disk not from the internet
+        // `fid` will be the doc_id, it will be incremented for each file to simulate
+        // its id
         int fid = 0;
+        // iterate over the files' names
         for (String fileName : files) {
             try (BufferedReader file = new BufferedReader(new FileReader(fileName))) {
+                // if the file is not in the sources map, add it
                 if (!sources.containsKey(fileName)) {
                     sources.put(fid, new SourceRecord(fid, fileName, fileName, "notext"));
                 }
                 String ln;
                 int flen = 0;
+                // read the file line by line
                 while ((ln = file.readLine()) != null) {
+                    // index the line
                     flen += indexOneLine(ln, fid);
                 }
+
+                // set the number of words in the file
                 sources.get(fid).length = flen;
 
             } catch (IOException e) {
@@ -85,28 +93,35 @@ public class Index5 {
             }
             fid++;
         }
-        // printDictionary();
     }
 
     // ----------------------------------------------------------------------------
     public int indexOneLine(String ln, int fid) {
         int flen = 0;
 
+        // split the line into words
         String[] words = ln.split("\\W+");
-        // String[] words = ln.replaceAll("(?:[^a-zA-Z0-9 -]|(?<=\\w)-(?!\\S))", "
-        // ").toLowerCase().split("\\s+");
+
+        // get the number of words in the line
         flen += words.length;
         for (String word : words) {
+            // convert the word to lowercase to make the search case-insensitive
             word = word.toLowerCase();
+
+            // skip stop words
             if (stopWord(word)) {
                 continue;
             }
+
+            // stem the word to get its root
             word = stemWord(word);
+
             // check to see if the word is not in the dictionary
             // if not add it
             if (!index.containsKey(word)) {
                 index.put(word, new DictEntry());
             }
+
             // add document id to the posting list
             if (!index.get(word).postingListContains(fid)) {
                 index.get(word).doc_freq += 1; // set doc freq to the number of doc that contain the term
@@ -120,10 +135,10 @@ public class Index5 {
             } else {
                 index.get(word).last.dtf += 1;
             }
+
             // set the term_fteq in the collection
             index.get(word).term_freq += 1;
             if (word.equalsIgnoreCase("lattice")) {
-
                 System.out.println("  <<" + index.get(word).getPosting(1) + ">> " + ln);
             }
 
