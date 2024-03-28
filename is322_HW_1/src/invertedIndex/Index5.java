@@ -14,19 +14,13 @@ import java.util.Map;
  * @author ehab
  */
 public class Index5 {
-    // --------------------------------------------
-    int N = 0;
-    public Map<Integer, SourceRecord> sources; // store the doc_id and the file name.
+    // Attributes to manipulate the inverted index
+    public Map<Integer, SourceRecord> sources; // Store the doc_id and the file name.
+    public HashMap<String, DictEntry> index; // The inverted index
+    String currentDirectory; // Get the current working directory
+    File rootDirectory; // Navigate up to the root directory of the project
 
-    public HashMap<String, DictEntry> index; // THe inverted index
-    // --------------------------------------------
-
-    // Get the current working directory
-    String currentDirectory;
-
-    // Navigate up to the root directory of the project
-    File rootDirectory;
-
+    // Default constructor to initialize the attributes
     public Index5() {
         sources = new HashMap<Integer, SourceRecord>();
         index = new HashMap<String, DictEntry>();
@@ -34,11 +28,7 @@ public class Index5 {
         rootDirectory = new File(currentDirectory).getParentFile().getParentFile().getParentFile();
     }
 
-    public void setN(int n) {
-        N = n;
-    }
-
-    // ---------------------------------------------
+    // Output the posting list of a term
     public void printPostingList(Posting p) {
         // Iterator<Integer> it2 = hset.iterator();
         System.out.print("[");
@@ -54,8 +44,7 @@ public class Index5 {
         System.out.println("]");
     }
 
-    // ---------------------------------------------
-    // print the dictionary
+    // Output the dictionary of terms and document frequency
     public void printDictionary() {
         Iterator it = index.entrySet().iterator();
         while (it.hasNext()) {
@@ -71,8 +60,8 @@ public class Index5 {
         System.out.println("*** Number of terms = " + index.size());
     }
 
-    // -----------------------------------------------
-    public void buildIndex(String[] files) { // from disk not from the internet
+    // Build index from a list of files from disk not from the internet
+    public void buildIndex(String[] files) {
         // `fid` will be the doc_id, it will be incremented for each file to simulate
         // its id
         int fid = 0;
@@ -101,7 +90,7 @@ public class Index5 {
         }
     }
 
-    // ----------------------------------------------------------------------------
+    // Manipulate terms, stemming, stop words, and build the index
     public int indexOneLine(String ln, int fid) {
         int flen = 0;
 
@@ -152,12 +141,11 @@ public class Index5 {
         return flen;
     }
 
-    // ----------------------------------------------------------------------------
+    // Check for stop words that are repeated & not useful for searching
     boolean stopWord(String word) {
         if (word.equals("the") || word.equals("to") || word.equals("be") || word.equals("for") || word.equals("from")
-                || word.equals("in")
-                || word.equals("a") || word.equals("into") || word.equals("by") || word.equals("or")
-                || word.equals("and") || word.equals("that")) {
+                || word.equals("in") || word.equals("a") || word.equals("into") || word.equals("by")
+                || word.equals("or") || word.equals("and") || word.equals("that")) {
             return true;
         }
         if (word.length() < 2) {
@@ -166,7 +154,6 @@ public class Index5 {
         return false;
 
     }
-    // ----------------------------------------------------------------------------
 
     String stemWord(String word) { // skip for now
         return word;
@@ -176,7 +163,7 @@ public class Index5 {
         // return s.toString();
     }
 
-    // ----------------------------------------------------------------------------
+    // Intersect two posting lists & get the resulting common docs
     Posting intersect(Posting pL1, Posting pL2) {
         /// **** -1- complete after each comment ****
         // INTERSECT ( p1 , p2 )
@@ -222,19 +209,21 @@ public class Index5 {
         return answer;
     }
 
+    // Search for a phrase in the index to get the result of the query
     public String find_24_01(String phrase) { // any mumber of terms non-optimized search
         String result = "";
         String[] words = phrase.split("\\W+");
         int len = words.length;
 
-        // fix this if word is not in the hash table will crash...
         Posting posting = null;
         int i = 0;
         while (i < len) {
+            // If the word is a stop word, skip it
             if (stopWord(words[i].toLowerCase())) {
                 i++;
                 continue;
             }
+            // If the word is not in the index, return an error message
             if (!index.containsKey(words[i].toLowerCase())) {
                 return "Word not found in the index";
             }
@@ -253,11 +242,11 @@ public class Index5 {
         return result;
     }
 
-    // ---------------------------------
-    String[] sort(String[] words) { // bubble sort
+    // Bubble sort the terms in the dictionary
+    String[] sort(String[] words) {
         boolean sorted = false;
         String sTmp;
-        // -------------------------------------------------------
+        // Loop while the array is not sorted
         while (!sorted) {
             sorted = true;
             for (int i = 0; i < words.length - 1; i++) {
@@ -273,8 +262,7 @@ public class Index5 {
         return words;
     }
 
-    // ---------------------------------
-
+    // Store the inverted index to the hard disk
     public void store(String storageName) {
         try {
             // TODO: Change the path to the storage file to the correct path
@@ -311,26 +299,25 @@ public class Index5 {
             }
             wr.write("end" + "\n");
             wr.close();
-            System.out.println("=============EBD STORE=============");
+            System.out.println("=============END STORE=============");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // =========================================
+    // Check if the storage file exists
     public boolean storageFileExists(String storageName) {
-        java.io.File f = rootDirectory.toPath().resolve("tmp11/rl/" + storageName).toFile();
+        File f = rootDirectory.toPath().resolve("tmp11/rl/" + storageName).toFile();
         System.out.println("storageFileExists: " + f.toString());
 
-        // java.io.File f = new java.io.File("/home/ehab/tmp11/rl/" + storageName);
         if (f.exists() && !f.isDirectory())
             return true;
         return false;
 
     }
 
-    // ----------------------------------------------------
+    // Create the storage file with the specified name
     public void createStore(String storageName) {
         try {
             String pathToStorage = rootDirectory.toPath().resolve("tmp11/" + storageName).toString();
@@ -344,8 +331,7 @@ public class Index5 {
         }
     }
 
-    // ----------------------------------------------------
-    // load index from hard disk into memory
+    // Load index from hard disk into memory
     public HashMap<String, DictEntry> load(String storageName) {
         try {
             String pathToStorage = rootDirectory.toPath().resolve("tmp11/rl/" + storageName).toString();
@@ -407,4 +393,3 @@ public class Index5 {
     }
 }
 
-// =====================================================================
