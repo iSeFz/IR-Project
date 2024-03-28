@@ -26,7 +26,6 @@ public class Test {
         String[] fileList = new File(files).list();
 
         fileList = index.sort(fileList); // Sort the index
-        index.N = fileList.length; // Store the number of documents in the collection
 
         // Add the path to the file names
         for (int i = 0; i < fileList.length; i++)
@@ -43,12 +42,11 @@ public class Test {
         // Take input query from the user
         String phrase = "";
         do {
-            System.out.println("Print search phrase: ");
+            System.out.print("Print search phrase: ");
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
             phrase = in.readLine();
-            System.out.println("Phrase: " + phrase);
             // Find the search phrase in the index
-            System.out.println(index.find_24_01(phrase));
+            System.out.println("\nPhrase: " + phrase + "\nQuery Results:\n" + index.find_24_01(phrase));
         } while (!phrase.isEmpty());
     }
 }
