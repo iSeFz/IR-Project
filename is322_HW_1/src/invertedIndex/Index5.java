@@ -94,11 +94,17 @@ public class Index5 {
     public int indexOneLine(String ln, int fid) {
         int flen = 0;
 
+        // get the number of words in the line
+        flen += indexOneLineForTrivialIndex(ln, fid);
+        indexOneLineBiWord(ln, fid);
+        
+        return flen;
+    }
+
+    private int indexOneLineForTrivialIndex(String ln, int fid) {
         // split the line into words
         String[] words = ln.split("\\W+");
 
-        // get the number of words in the line
-        flen += words.length;
         for (String word : words) {
             // convert the word to lowercase to make the search case-insensitive
             word = word.toLowerCase();
@@ -113,6 +119,7 @@ public class Index5 {
 
             // check to see if the word is not in the dictionary
             // if not add it
+
             if (!index.containsKey(word)) {
                 index.put(word, new DictEntry());
             }
@@ -133,12 +140,45 @@ public class Index5 {
 
             // set the term_fteq in the collection
             index.get(word).term_freq += 1;
+
             if (word.equalsIgnoreCase("lattice")) {
                 System.out.println("  <<" + index.get(word).getPosting(1) + ">> " + ln);
             }
-
         }
-        return flen;
+        return words.length;
+    }
+
+    private void indexOneLineBiWord(String ln, int fid) {
+        // split the line into words
+        String[] words = ln.split("\\W+");
+        String lastWord = null;
+        for (String word : words) {
+            // convert the word to lowercase to make the search case-insensitive
+            word = word.toLowerCase();
+            if (lastWord != null) {
+                String biwordString = lastWord + "_" + word;
+                // ----------------- biword indexing -------------------
+                if (!index.containsKey(biwordString)) {
+                    index.put(biwordString, new DictEntry());
+                }
+                // ----------------- biword indexing -------------------
+                index.get(biwordString).term_freq += 1;
+                // ----------------- biword indexing -------------------
+                if (!index.get(biwordString).postingListContains(fid)) {
+                    index.get(biwordString).doc_freq += 1; // set doc freq to the number of doc that contain the term
+                    if (index.get(biwordString).pList == null) {
+                        index.get(biwordString).pList = new Posting(fid);
+                        index.get(biwordString).last = index.get(biwordString).pList;
+                    } else {
+                        index.get(biwordString).last.next = new Posting(fid);
+                        index.get(biwordString).last = index.get(biwordString).last.next;
+                    }
+                } else {
+                    index.get(biwordString).last.dtf += 1;
+                }
+            }
+            lastWord = word;
+        }
     }
 
     // Check for stop words that are repeated & not useful for searching
@@ -165,28 +205,6 @@ public class Index5 {
 
     // Intersect two posting lists & get the resulting common docs
     Posting intersect(Posting pL1, Posting pL2) {
-        /// **** -1- complete after each comment ****
-        // INTERSECT ( p1 , p2 )
-        // 1 answer ← {}
-        // Posting answer = null;
-        // Posting last = null;
-        // 2 while p1 != NIL and p2 != NIL
-
-        // 3 do if docID ( p 1 ) = docID ( p2 )
-
-        // 4 then ADD ( answer, docID ( p1 ))
-        // answer.add(pL1.docId);
-
-        // 5 p1 ← next ( p1 )
-        // 6 p2 ← next ( p2 )
-
-        // 7 else if docID ( p1 ) < docID ( p2 )
-
-        // 8 then p1 ← next ( p1 )
-        // 9 else p2 ← next ( p2 )
-
-        // 10 return answer
-
         Posting answer = null;
         Posting last = null;
         while (pL1 != null && pL2 != null) {
@@ -212,12 +230,26 @@ public class Index5 {
     // Search for a phrase in the index to get the result of the query
     public String find_24_01(String phrase) { // any mumber of terms non-optimized search
         String result = "";
-        String[] words = phrase.split("\\W+");
+        String[] words = phrase.split("\\s+");
         int len = words.length;
 
         Posting posting = null;
         int i = 0;
         while (i < len) {
+            if (words[i].startsWith("\"")) {
+                String biWords = words[i].substring(1) + "_"
+                        + words[i + 1].substring(0, words[i + 1].length() - 1).toLowerCase();
+                // If the word is not in the index, return an error message
+                if (!index.containsKey(biWords)) {
+                    return "Word not found in the index";
+                }
+                if (posting == null)
+                    posting = index.get(biWords).pList;
+                // Otherwise intersect the posting list with the current word
+                posting = intersect(posting, index.get(biWords).pList);
+                i += 2;
+                continue;
+            }
             // If the word is a stop word, skip it
             if (stopWord(words[i].toLowerCase())) {
                 i++;
@@ -392,4 +424,3 @@ public class Index5 {
         return index;
     }
 }
-
