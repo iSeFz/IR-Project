@@ -1,5 +1,5 @@
-# Inverted Index
-This is a collaboration to complete the First Assignment in the **Information Retrieval** Course at FCAI CU.
+# IR Project
+This is a collaboration to complete the project of the **Information Retrieval** Course at FCAI CU.
 
 ## Instructions
 - Always `git pull` before you push any new edits  
