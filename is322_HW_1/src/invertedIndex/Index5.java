@@ -97,7 +97,7 @@ public class Index5 {
         // get the number of words in the line
         flen += indexOneLineForTrivialIndex(ln, fid);
         indexOneLineBiWord(ln, fid);
-        
+        indexOneLinePositional(ln, fid);
         return flen;
     }
 
@@ -181,6 +181,45 @@ public class Index5 {
         }
     }
 
+    // Positional Index Build Implementation
+    private void indexOneLinePositional(String ln, int fid) {
+        // Define the position of the word in the line
+        int posInDoc = 0;
+        // Split the line into words
+        String[] words = ln.split("\\W+");
+        String lastWord = null;
+        for (String word : words) {
+            // convert the word to lowercase to make the search case-insensitive
+            word = word.toLowerCase();
+            if (lastWord != null) {
+                // Check to see if the word is not in the dictionary if not add it
+                if (!index.containsKey(word))
+                    index.put(word, new DictEntry());
+                // Increment the term frequecy if the word is already in the index
+                index.get(word).term_freq += 1;
+                // Add the document id to the posting list of the word (if not exist)
+                // Otherwise, 
+                if (!index.get(word).postingListContains(fid)) {
+                    index.get(word).doc_freq += 1; // set doc freq to the number of doc that contain the term
+                    // If the posting is empty, create a new posting with the current doc
+                    // And link it with the previous ones, otherwise just link it directly
+                    if (index.get(word).pList == null) {
+                        index.get(word).pList = new Posting(fid);
+                        index.get(word).last = index.get(word).pList;
+                    } else {
+                        index.get(word).last.next = new Posting(fid);
+                        index.get(word).last = index.get(word).last.next;
+                    }
+                } else {
+                    index.get(word).last.dtf += 1;
+                }
+                // Add the position of each term to the posting list
+                index.get(word).last.positions.add(posInDoc++);
+            }
+            lastWord = word;
+        }
+    }
+
     // Check for stop words that are repeated & not useful for searching
     boolean stopWord(String word) {
         if (word.equals("the") || word.equals("to") || word.equals("be") || word.equals("for") || word.equals("from")
@@ -228,42 +267,45 @@ public class Index5 {
     }
 
     // Search for a phrase in the index to get the result of the query
-    public String find_24_01(String phrase) { // any mumber of terms non-optimized search
+    public String find_24_01(String phrase) { // any number of terms non-optimized search
         String result = "";
         String[] words = phrase.split("\\s+");
         int len = words.length;
-
+        Boolean isBiWord = false;
         Posting posting = null;
         int i = 0;
         while (i < len) {
-            if (words[i].startsWith("\"")) {
-                String biWords = words[i].substring(1) + "_"
-                        + words[i + 1].substring(0, words[i + 1].length() - 1).toLowerCase();
-                // If the word is not in the index, return an error message
-                if (!index.containsKey(biWords)) {
-                    return "Word not found in the index";
-                }
-                if (posting == null)
-                    posting = index.get(biWords).pList;
-                // Otherwise intersect the posting list with the current word
-                posting = intersect(posting, index.get(biWords).pList);
-                i += 2;
-                continue;
-            }
+            String currentWord = words[i].toLowerCase();
             // If the word is a stop word, skip it
-            if (stopWord(words[i].toLowerCase())) {
+            if (stopWord(currentWord)) {
                 i++;
                 continue;
             }
-            // If the word is not in the index, return an error message
-            if (!index.containsKey(words[i].toLowerCase())) {
-                return "Word not found in the index";
+            // If there are exactly two words between the double quotes use the biword index
+            if (words[i].startsWith("\"")) {
+                if(words[i + 1].endsWith("\"")) {
+                    currentWord = words[i].substring(1).toLowerCase() + "_"
+                            + words[i + 1].substring(0, words[i + 1].length() - 1).toLowerCase();
+                    isBiWord = true;
+                } else {
+                    // Remove the first quote from the word
+                    currentWord = words[i].substring(1).toLowerCase();
+                }
             }
+            // Remove the last quote from the word
+            if (words[i].endsWith("\""))
+                currentWord = words[i].substring(0, words[i].length() - 1).toLowerCase();
+            // If the word is not in the index, return an error message
+            if (!index.containsKey(currentWord))
+                return "Word not found in the index";
+            // If the posting list is null, get the posting list of the current word
             if (posting == null)
-                posting = index.get(words[i].toLowerCase()).pList;
+                posting = index.get(currentWord).pList;
             // Otherwise intersect the posting list with the current word
-            posting = intersect(posting, index.get(words[i].toLowerCase()).pList);
-            i++;
+            posting = intersect(posting, index.get(currentWord).pList);
+            // If it is a biword, skip the next word, increment the counter by 2
+            // Otherwise increment the counter by 1 only
+            i = (isBiWord) ? i + 2 : i + 1;
         }
         while (posting != null) {
             // System.out.println("\t" + sources.get(num));
