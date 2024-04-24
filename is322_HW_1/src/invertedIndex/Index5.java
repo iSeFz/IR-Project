@@ -309,7 +309,7 @@ public class Index5 {
         String result = "";
         String[] words = phrase.split("\\s+");
         int len = words.length;
-        Boolean isBiWord = false;
+        Boolean isBiWord = false, isPositional = false;
         Posting posting = null;
         int i = 0, skip = 0;
         while (i < len) {
@@ -329,6 +329,7 @@ public class Index5 {
                 } else {
                     // Remove the first quote from the word
                     currentWord = words[i].substring(1).toLowerCase();
+                    isPositional = true;
                 }
             }
             // Remove the last quote from the word
@@ -341,7 +342,10 @@ public class Index5 {
             if (i == skip)
                 posting = index.get(currentWord).pList;
             // Otherwise intersect the posting list with the current word
-            posting = positionalIntersect(posting, index.get(currentWord).pList, skip + 1);
+            if (isBiWord || !isPositional)
+                posting = intersect(posting, index.get(currentWord).pList);
+            else
+                posting = positionalIntersect(posting, index.get(currentWord).pList, skip + 1);
             // If it is a biword, skip the next word, increment the counter by 2
             // Otherwise increment the counter by 1 only
             i = (isBiWord) ? i + 2 : i + 1;
