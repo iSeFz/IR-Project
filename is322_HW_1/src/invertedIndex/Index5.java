@@ -6,9 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ehab
@@ -77,7 +75,7 @@ public class Index5 {
                 // read the file line by line
                 while ((ln = file.readLine()) != null) {
                     // index the line
-                    flen += indexOneLine(ln, fid);
+                    flen += indexOneLine(ln, fid, flen);
                 }
 
                 // set the number of words in the file
@@ -91,13 +89,13 @@ public class Index5 {
     }
 
     // Manipulate terms, stemming, stop words, and build the index
-    public int indexOneLine(String ln, int fid) {
+    public int indexOneLine(String ln, int fid, int len) {
         int flen = 0;
 
         // get the number of words in the line
         flen += indexOneLineForTrivialIndex(ln, fid);
         indexOneLineBiWord(ln, fid);
-        indexOneLinePositional(ln, fid);
+        indexOneLinePositional(ln, fid, len);
         return flen;
     }
 
@@ -182,41 +180,37 @@ public class Index5 {
     }
 
     // Positional Index Build Implementation
-    private void indexOneLinePositional(String ln, int fid) {
+    private void indexOneLinePositional(String ln, int fid, int len) {
         // Define the position of the word in the line
-        int posInDoc = 0;
+        int posInDoc = len;
         // Split the line into words
         String[] words = ln.split("\\W+");
-        String lastWord = null;
         for (String word : words) {
             // convert the word to lowercase to make the search case-insensitive
             word = word.toLowerCase();
-            if (lastWord != null) {
-                // Check to see if the word is not in the dictionary if not add it
-                if (!index.containsKey(word))
-                    index.put(word, new DictEntry());
-                // Increment the term frequecy if the word is already in the index
-                index.get(word).term_freq += 1;
-                // Add the document id to the posting list of the word (if not exist)
-                // Otherwise, 
-                if (!index.get(word).postingListContains(fid)) {
-                    index.get(word).doc_freq += 1; // set doc freq to the number of doc that contain the term
-                    // If the posting is empty, create a new posting with the current doc
-                    // And link it with the previous ones, otherwise just link it directly
-                    if (index.get(word).pList == null) {
-                        index.get(word).pList = new Posting(fid);
-                        index.get(word).last = index.get(word).pList;
-                    } else {
-                        index.get(word).last.next = new Posting(fid);
-                        index.get(word).last = index.get(word).last.next;
-                    }
+            // Check to see if the word is not in the dictionary if not add it
+            if (!index.containsKey(word))
+                index.put(word, new DictEntry());
+            // Increment the term frequecy if the word is already in the index
+            index.get(word).term_freq += 1;
+            // Add the document id to the posting list of the word (if not exist)
+            // Otherwise,
+            if (!index.get(word).postingListContains(fid)) {
+                index.get(word).doc_freq += 1; // set doc freq to the number of doc that contain the term
+                // If the posting is empty, create a new posting with the current doc
+                // And link it with the previous ones, otherwise just link it directly
+                if (index.get(word).pList == null) {
+                    index.get(word).pList = new Posting(fid);
+                    index.get(word).last = index.get(word).pList;
                 } else {
-                    index.get(word).last.dtf += 1;
+                    index.get(word).last.next = new Posting(fid);
+                    index.get(word).last = index.get(word).last.next;
                 }
-                // Add the position of each term to the posting list
-                index.get(word).last.positions.add(posInDoc++);
+            } else {
+                index.get(word).last.dtf += 1;
             }
-            lastWord = word;
+            // Add the position of each term to the posting list
+            index.get(word).last.positions.add(posInDoc++);
         }
     }
 
@@ -266,6 +260,50 @@ public class Index5 {
         return answer;
     }
 
+    Posting positionalIntersect(Posting pL1, Posting pL2, int k) {
+        Posting answer = null;
+        Posting last = null;
+        while (pL1 != null && pL2 != null) {
+            if (pL1.docId == pL2.docId) {
+                List<Integer> l = new ArrayList<>(), pp1 = new ArrayList<>(pL1.positions), pp2 = new ArrayList<>(pL2.positions);
+                Posting tempPosting = new Posting(pL1.docId, pL1.dtf);
+                while (!pp1.isEmpty()) {
+                    while (!pp2.isEmpty()) {
+                        if (pp2.getFirst() - pp1.getFirst() <= k && pp2.getFirst() - pp1.getFirst() >= 0) {
+                            l.add(pp2.getFirst());
+                        }
+                        pp2.remove(0);
+                    }
+                    while (!l.isEmpty() && Math.abs(l.getFirst() - pp1.getFirst()) > k) {
+                        l.remove(0);
+                    }
+                    for (int i = 0; i < l.size(); i++) {
+                        if (!tempPosting.positions.contains(l.get(i)))
+                            tempPosting.positions.add(l.get(i));
+                    }
+                    pp2 = new ArrayList<>(pL2.positions);
+                    pp1.remove(0);
+                }
+                if (!tempPosting.positions.isEmpty()) {
+                    if (answer == null) {
+                        answer = tempPosting;
+                        last = answer;
+                    } else {
+                        last.next = tempPosting;
+                        last = last.next;
+                    }
+                }
+                pL1 = pL1.next;
+                pL2 = pL2.next;
+            } else if (pL1.docId < pL2.docId) {
+                pL1 = pL1.next;
+            } else {
+                pL2 = pL2.next;
+            }
+        }
+        return answer;
+    }
+
     // Search for a phrase in the index to get the result of the query
     public String find_24_01(String phrase) { // any number of terms non-optimized search
         String result = "";
@@ -273,17 +311,18 @@ public class Index5 {
         int len = words.length;
         Boolean isBiWord = false;
         Posting posting = null;
-        int i = 0;
+        int i = 0, skip = 0;
         while (i < len) {
             String currentWord = words[i].toLowerCase();
             // If the word is a stop word, skip it
             if (stopWord(currentWord)) {
                 i++;
+                skip++;
                 continue;
             }
             // If there are exactly two words between the double quotes use the biword index
             if (words[i].startsWith("\"")) {
-                if(words[i + 1].endsWith("\"")) {
+                if (words[i + 1].endsWith("\"")) {
                     currentWord = words[i].substring(1).toLowerCase() + "_"
                             + words[i + 1].substring(0, words[i + 1].length() - 1).toLowerCase();
                     isBiWord = true;
@@ -298,14 +337,15 @@ public class Index5 {
             // If the word is not in the index, return an error message
             if (!index.containsKey(currentWord))
                 return "Word not found in the index";
-            // If the posting list is null, get the posting list of the current word
-            if (posting == null)
+            // If this is the first word, get the posting list of the current word
+            if (i == skip)
                 posting = index.get(currentWord).pList;
             // Otherwise intersect the posting list with the current word
-            posting = intersect(posting, index.get(currentWord).pList);
+            posting = positionalIntersect(posting, index.get(currentWord).pList, skip + 1);
             // If it is a biword, skip the next word, increment the counter by 2
             // Otherwise increment the counter by 1 only
             i = (isBiWord) ? i + 2 : i + 1;
+            skip = 0;
         }
         while (posting != null) {
             // System.out.println("\t" + sources.get(num));
