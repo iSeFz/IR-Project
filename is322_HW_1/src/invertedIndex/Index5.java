@@ -309,10 +309,11 @@ public class Index5 {
         String result = "";
         String[] words = phrase.split("\\s+");
         int len = words.length;
-        Boolean isBiWord = false, isPositional = false;
+        Boolean isPositional = false;
         Posting posting = null;
         int i = 0, skip = 0;
         while (i < len) {
+            Boolean isBiWord = false;
             String currentWord = words[i].toLowerCase();
             // If the word is a stop word, skip it
             if (stopWord(currentWord)) {
