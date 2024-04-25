@@ -269,12 +269,12 @@ public class Index5 {
                 Posting tempPosting = new Posting(pL1.docId, pL1.dtf);
                 while (!pp1.isEmpty()) {
                     while (!pp2.isEmpty()) {
-                        if (pp2.getFirst() - pp1.getFirst() <= k && pp2.getFirst() - pp1.getFirst() >= 0) {
-                            l.add(pp2.getFirst());
+                        if (pp2.get(0) - pp1.get(0) <= k && pp2.get(0) - pp1.get(0) >= 0) {
+                            l.add(pp2.get(0));
                         }
                         pp2.remove(0);
                     }
-                    while (!l.isEmpty() && Math.abs(l.getFirst() - pp1.getFirst()) > k) {
+                    while (!l.isEmpty() && Math.abs(l.get(0) - pp1.get(0)) > k) {
                         l.remove(0);
                     }
                     for (int i = 0; i < l.size(); i++) {
