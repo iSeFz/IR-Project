@@ -17,27 +17,35 @@ public class Test {
 
     public static void main(String args[]) throws IOException {
         Index5 index = new Index5();
-        //|**  change it to your collection directory 
-        //|**  in windows "C:\\tmp11\\rl\\collection\\"       
-        String files = "/home/ehab/tmp11/rl/collection/";
+        // |** change it to your collection directory
+        // |** in windows "C:\\tmp11\\rl\\collection\\"
+        String currentDirectory = System.getProperty("user.dir");
+
+        // Navigate up to the root directory of the project
+        File rootDirectory = new File(currentDirectory);
+
+        // Change directory to the collection directory
+        String files = rootDirectory.toPath().resolve("tmp11/rl/collection/").toString();
+        System.out.println(files);
 
         File file = new File(files);
-        //|** String[] 	list()
-        //|**  Returns an array of strings naming the files and directories in the directory denoted by this abstract pathname.
+        // |** String[] list()
+        // |** Returns an array of strings naming the files and directories in the
+        // directory denoted by this abstract pathname.
         String[] fileList = file.list();
 
         fileList = index.sort(fileList);
         index.N = fileList.length;
 
         for (int i = 0; i < fileList.length; i++) {
-            fileList[i] = files + fileList[i];
+            fileList[i] = files + "/" + fileList[i];
         }
         index.buildIndex(fileList);
         index.store("index");
         index.printDictionary();
 
-        String test3 = "data  should plain greatest comif"; // data  should plain greatest comif
-//        System.out.println("Boo0lean Model result = \n" + index.find_24_01(test3));
+        String test3 = "data  should plain greatest comif"; // data should plain greatest comif
+        // System.out.println("Boo0lean Model result = \n" + index.find_24_01(test3));
 
         String phrase = "";
 
@@ -45,7 +53,7 @@ public class Test {
             System.out.println("Print search phrase: ");
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
             phrase = in.readLine();
-/// -3- **** complete here ****
+            /// -3- **** complete here ****
         } while (!phrase.isEmpty());
 
     }

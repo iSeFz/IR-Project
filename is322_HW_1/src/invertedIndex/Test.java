@@ -16,7 +16,7 @@ public class Test {
         String currentDirectory = System.getProperty("user.dir");
 
         // Navigate up to the root directory of the project
-        File rootDirectory = new File(currentDirectory).getParentFile().getParentFile().getParentFile();
+        File rootDirectory = new File(currentDirectory);
 
         // Change directory to the collection directory
         String files = rootDirectory.toPath().resolve("tmp11/rl/collection/").toString();

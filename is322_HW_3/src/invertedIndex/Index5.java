@@ -13,10 +13,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import static java.lang.Math.log10;
 import static java.lang.Math.sqrt;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.io.PrintWriter;
 
 /**
@@ -42,7 +47,7 @@ public class Index5 {
         sources = new HashMap<Integer, SourceRecord>();
         index = new HashMap<String, DictEntry>();
         currentDirectory = System.getProperty("user.dir");
-        rootDirectory = new File(currentDirectory).getParentFile().getParentFile().getParentFile();
+        rootDirectory = new File(currentDirectory);
     }
 
     public void setN(int n) {
@@ -299,51 +304,50 @@ public class Index5 {
 
         String result = "";
         String[] words = phrase.split("\\W+");
-        int len = words.length;
+        Set<Integer> visitedDocs = new TreeSet<>();
         sortedScore = new SortedScore();
 
-        double scores[] = new double[N];
-        // String urls[] = new String[N];
-        // float Scores[] = new float[N];
-        double qwt[] = new double[len];
-        double qnz[] = new double[len];
+        double[] scores = new double[N];
+        double[] Scores = new double[N];
 
         // 1 float Scores[N] = 0
         for (int i = 0; i < N; i++) {
             scores[i] = 0;
         }
         // 2 Initialize Length[N]
-        double length[] = new double[N];
+        double[] length = new double[N];
         // 3 for each query term t
         for (String term : words) {
             // 4 do calculate w t, q and fetch postings list for t
             term = term.toLowerCase();
+            DictEntry wordDictEntry = index.get(term);
+            if (wordDictEntry == null) {
+                continue;
+            }
             int tdf = index.get(term).doc_freq; // number of documents that contains the term
-            int ttf = index.get(term).term_freq; //
+            // int ttf = index.get(term).term_freq; //
             // 4.a compute idf
             double idf = log10(N / (double) tdf); // can be computed earlier
             // 5 for each pair(doc_id, dtf ) in postings list
             Posting p = index.get(term).pList;
-            
             while (p != null) {
-                // urls[p.docId] = sources.get(p.docId).URL;
+                visitedDocs.add(p.docId);
                 // 6 add the term score for (term/doc) to score of each doc
                 scores[p.docId] += (1 + log10((double) p.dtf)) * idf;
                 // Normalize for the length of the doc
-                length[p.docId] += (1 + log10((double) p.dtf)) * idf;
+                length[p.docId] += p.dtf * p.dtf;
                 p = p.next;
             }
-            // 7 Read the array Length[d]
-            // 8 for each d
-            for (int i = 0; i < N; i++) {
-                // 9 do Scores[d] = Scores[d]/Length[d]
-                scores[i] = scores[i] / length[i];
-                sortedScore.insertScoreRecord(scores[i], sources.get(i).URL, sources.get(i).title, "");
-            }
-            // 10 return Top K components of Scores[]
-            result = sortedScore.printScores();
         }
-
+        // 7 Read the array Length[d]
+        // 8 for each d
+        for (Integer docId : visitedDocs) {
+            // 9 do Scores[d] = Scores[d]/Length[d]
+            Scores[docId] = scores[docId] / length[docId];
+            sortedScore.insertScoreRecord(Scores[docId], sources.get(docId).URL, sources.get(docId).title, "");
+        }
+        // 10 return Top K components of Scores[]
+        result = sortedScore.printScores();
         return result;
     }
 
