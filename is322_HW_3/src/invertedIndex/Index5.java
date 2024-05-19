@@ -301,15 +301,16 @@ public class Index5 {
     // ==========================================================
     public String find_07a(String phrase) {
         System.out.println("-------------------------  find_07 -------------------------");
-
+    
         String result = "";
         String[] words = phrase.split("\\W+");
         Set<Integer> visitedDocs = new TreeSet<>();
         sortedScore = new SortedScore();
-
+    
         double[] scores = new double[N];
         double[] Scores = new double[N];
-
+        double queryLength = 0;
+    
         // 1 float Scores[N] = 0
         for (int i = 0; i < N; i++) {
             scores[i] = 0;
@@ -325,17 +326,19 @@ public class Index5 {
                 continue;
             }
             int tdf = index.get(term).doc_freq; // number of documents that contains the term
-            // int ttf = index.get(term).term_freq; //
             // 4.a compute idf
             double idf = log10(N / (double) tdf); // can be computed earlier
+            double wtq = 1 + log10((double) words.length); // calculate w t, q
+            queryLength += wtq * wtq; // add the square of w t, q to the length of the query
             // 5 for each pair(doc_id, dtf ) in postings list
             Posting p = index.get(term).pList;
             while (p != null) {
                 visitedDocs.add(p.docId);
                 // 6 add the term score for (term/doc) to score of each doc
-                scores[p.docId] += (1 + log10((double) p.dtf)) * idf;
+                // scores[p.docId] += (1 + log10((double) p.dtf)) * idf; // As Assignment said
+                scores[p.docId] += wtq * (1 + log10((double) p.dtf)) * idf;
                 // Normalize for the length of the doc
-                length[p.docId] += p.dtf * p.dtf;
+                length[p.docId] += p.dtf * p.dtf; // the number of term in a document
                 p = p.next;
             }
         }
@@ -343,7 +346,8 @@ public class Index5 {
         // 8 for each d
         for (Integer docId : visitedDocs) {
             // 9 do Scores[d] = Scores[d]/Length[d]
-            Scores[docId] = scores[docId] / length[docId];
+            // Scores[docId] = scores[docId] / length[docId]; // As Assignment said
+            Scores[docId] = scores[docId] / (sqrt(length[docId]) * sqrt(queryLength));
             sortedScore.insertScoreRecord(Scores[docId], sources.get(docId).URL, sources.get(docId).title, "");
         }
         // 10 return Top K components of Scores[]
